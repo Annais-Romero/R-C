@@ -11,5 +11,5 @@ export interface Car {
   image: string;
   type: string;
   created_at?: string;
-  gallery: string[]; // 👈 ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ EXACTAMENTE ASÍ
+  gallery: string[];
 }
