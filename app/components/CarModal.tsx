@@ -1,6 +1,16 @@
-import { useState } from 'react';
+"use client"; // Obligatorio para componentes interactivos táctiles en Next.js
+
 import { Car } from '../types/car';
-import { supabase } from '../lib/supabase'; // Asegúrate de que esta ruta apunte a tu cliente de Supabase
+import { supabase } from '../lib/supabase';
+
+// Importamos Swiper y sus componentes de React
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+
+// Importamos los estilos base obligatorios de Swiper
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 interface CarModalProps {
   car: Car;
@@ -8,11 +18,10 @@ interface CarModalProps {
 }
 
 export default function CarModal({ car, onClose }: CarModalProps) {
-  // Normalización segura para mapear variables de la Base de Datos
   const displayPrice = car.price ?? car.price;
   const displayEngine = car.motor ?? (car as any).motor;
 
-  // Helper interno para resolver las rutas del Storage de Supabase en URLs públicas visibles
+  // Función para resolver las URLs de las imágenes de Supabase
   const obtenerUrlVisible = (ruta: string): string => {
     if (!ruta) return '';
     if (ruta.startsWith('http://') || ruta.startsWith('https://')) return ruta;
@@ -20,14 +29,12 @@ export default function CarModal({ car, onClose }: CarModalProps) {
     return data.publicUrl;
   };
 
-  // Unificar la imagen principal con el array de la galería transformándolas en URLs válidas
+  // Construcción del array de imágenes de la galería
   const images: string[] = [];
-  
   if (car.image) {
     images.push(obtenerUrlVisible(car.image));
   }
   
-  // Forzamos lectura segura por si hay inconsistencias con los tipos de la propiedad gallery
   const rawGallery = car.gallery ?? (car as any).gallery;
   if (rawGallery && Array.isArray(rawGallery)) {
     rawGallery.filter(Boolean).forEach((imgRuta: string) => {
@@ -35,74 +42,79 @@ export default function CarModal({ car, onClose }: CarModalProps) {
     });
   }
 
-  // Estado para controlar qué imagen se está visualizando
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const nextImage = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-  };
-
-  const phoneNumber = "56912345678"; 
+  const phoneNumber = "56948425222"; 
   const message = `Hola! Quiero consultar disponibilidad para el vehículo: ${car.brand} ${car.model}`;
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      
+      {/* 🌟 BLOQUE DE ESTILOS INYECTADOS: Esto obliga al Shadow DOM de Swiper a tomar el color amarillo corporativo */}
+      <style>{`
+        .custom-swiper-container {
+          --swiper-navigation-color: #fbbf24 !important;
+          --swiper-pagination-color: #fbbf24 !important;
+        }
+        .custom-swiper-container .swiper-button-next,
+        .custom-swiper-container .swiper-button-prev {
+          background-color: rgba(0, 0, 0, 0.45) !important;
+          width: 36px !important;
+          height: 36px !important;
+          border-radius: 50% !important;
+          transition: background-color 0.2s ease;
+        }
+        .custom-swiper-container .swiper-button-next:hover,
+        .custom-swiper-container .swiper-button-prev:hover {
+          background-color: rgba(0, 0, 0, 0.75) !important;
+        }
+        .custom-swiper-container .swiper-button-next::after,
+        .custom-swiper-container .swiper-button-prev::after {
+          font-size: 14px !important;
+          font-weight: bold !important;
+        }
+      `}</style>
+
       {/* Contenedor del Modal */}
       <div className="relative w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl p-6 text-zinc-100">
         
         {/* Botón Cerrar */}
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 p-1.5 rounded-full transition-colors"
+          className="absolute top-4 right-4 z-50 text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 p-1.5 rounded-full transition-colors shadow-md"
         >
           ✕
         </button>
 
-        {/* CONTENEDOR DEL SLIDER DE IMÁGENES */}
-        <div className="relative h-48 w-full bg-zinc-950 rounded-xl overflow-hidden mb-5 group">
+        {/* CONTENEDOR DEL CAROUSEL TÁCTIL (Con clase personalizada para los estilos de arriba) */}
+        <div className="relative h-56 w-full bg-zinc-950 rounded-xl overflow-hidden mb-5 custom-swiper-container">
           {images.length > 0 ? (
-            <>
-              <img 
-                src={images[currentIndex]} 
-                alt={`${car.brand} - vista ${currentIndex + 1}`} 
-                className="w-full h-full object-cover transition-all duration-300"
-              />
-              
-              {/* Controles de navegación (solo se muestran si hay más de 1 imagen) */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full text-xs transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    ❮
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full text-xs transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    ❯
-                  </button>
-
-                  {/* Indicador de posición (Puntitos abajo) */}
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-2 py-1 rounded-full">
-                    {images.map((_, idx) => (
-                      <span
-                        key={idx}
-                        className={`w-1.5 h-1.5 rounded-full transition-all ${
-                          idx === currentIndex ? 'bg-amber-400 scale-110' : 'bg-zinc-500'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
+            <Swiper
+              modules={[Navigation, Pagination]}
+              spaceBetween={0}
+              slidesPerView={1}
+              navigation={images.length > 1}
+              pagination={images.length > 1 ? { clickable: true } : false}
+              grabCursor={true}
+              className="w-full h-full"
+              // Forzado extra mediante CSS Custom Properties directo en la etiqueta de React
+              style={{
+                type: "text/css",
+                "--swiper-navigation-color": "#fbbf24",
+                "--swiper-pagination-color": "#fbbf24",
+              } as React.CSSProperties}
+            >
+              {images.map((imgUrl, idx) => (
+                <SwiperSlide key={idx} className="w-full h-full">
+                  <img 
+                    src={imgUrl} 
+                    alt={`${car.brand} - vista ${idx + 1}`} 
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm">
               Sin imágenes disponibles
@@ -110,12 +122,12 @@ export default function CarModal({ car, onClose }: CarModalProps) {
           )}
         </div>
 
-        {/* Título */}
+        {/* Título del Vehículo */}
         <h2 className="text-2xl font-black text-white tracking-tight mb-4 text-center">
           {car.brand} {car.model}
         </h2>
 
-        {/* CONTENEDOR DE ESPECIFICACIONES */}
+        {/* Tabla de Especificaciones Técnicas */}
         <div className="bg-zinc-800/50 border border-zinc-800 rounded-xl p-4 mb-6 space-y-2.5 text-sm">
           <div className="flex justify-between border-b border-zinc-700/30 pb-1.5">
             <span className="text-zinc-400">Marca:</span>
@@ -143,7 +155,7 @@ export default function CarModal({ car, onClose }: CarModalProps) {
           </div>
         </div>
 
-        {/* Sección de Precio Ambar y Acción de WhatsApp */}
+        {/* Sección de Precio y Botón de WhatsApp */}
         <div className="text-center space-y-4">
           <div>
             <span className="text-3xl font-black text-amber-400">
