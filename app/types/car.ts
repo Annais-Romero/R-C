@@ -10,6 +10,6 @@ export interface Car {
   price: number;
   image: string;
   type: string;
-  gallery?: string[]; // 👈 AGREGA ESTA LÍNEA (El ? aquí sí es para indicar opcional en TS)
   created_at?: string;
+  gallery: string[]; // 👈 ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ EXACTAMENTE ASÍ
 }
