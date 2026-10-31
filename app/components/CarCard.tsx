@@ -1,4 +1,5 @@
 import { Car } from '../types/car';
+import { supabase } from '../lib/supabase';
 
 interface CarCardProps {
   car: Car;
@@ -8,6 +9,14 @@ interface CarCardProps {
 export default function CarCard({ car, onSelect }: CarCardProps) {
   // Normalización segura para mapear variables de la Base de Datos
   const displayPrice = car.price ?? car.price;
+
+  // En la base de datos, la foto puede estar almacenada como ruta de Storage.
+  // Convertirla en URL pública, igual que en CarModal.tsx.
+  const imageUrl = car.image?.startsWith('http://') || car.image?.startsWith('https://')
+    ? car.image
+    : car.image
+      ? supabase.storage.from('car-images').getPublicUrl(car.image).data.publicUrl
+      : '';
 
   const phoneNumber = "56912345678"; 
   const message = `Hola! Estoy interesado en arrendar el vehículo: ${car.brand} ${car.model}`;
@@ -21,7 +30,7 @@ export default function CarCard({ car, onSelect }: CarCardProps) {
       {/* Contenedor de la Imagen */}
       <div className="h-40 w-full relative bg-zinc-950 rounded-xl overflow-hidden mb-4">
         <img 
-          src={car.image} 
+          src={imageUrl} 
           alt={`${car.brand} ${car.model}`}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
